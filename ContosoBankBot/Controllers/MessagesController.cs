@@ -9,6 +9,7 @@ using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
 using ContosoBankBot.Models;
 using System.Collections.Generic;
+using ContosoBankBot.DataModels;
 
 namespace ContosoBankBot
 {
@@ -26,12 +27,22 @@ namespace ContosoBankBot
 
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
 
+                StateClient stateClient = activity.GetStateClient();
+                BotData userData = await stateClient.BotState.GetUserDataAsync(activity.ChannelId, activity.From.Id);
+
                 var userMessage = activity.Text;
                 var endOutput = "Welcome to Contoso Bank. Type a command or type Help for a list of available commands";
 
+                //if (userData.GetProperty<bool>("AdminRights"))
+                //{
+                //    Activity reply1 = activity.CreateReply("You have admin rights");
+                //    await connector.Conversations.ReplyToActivityAsync(reply1);
+                //}
+
                 if (userMessage.ToLower().Equals("help"))
                 {
-                    endOutput = "Avaliable commands: \n\n Branches - Return list of branches \n Branch <Branch name> - Return Branch information";
+                    endOutput = "Avaliable commands: \n\n Branches - Return list of branches \n Branch <Branch name> - Return Branch information  \n ATMS - Return a list of ATMS and their availablity ";
+
                 }
                 else if (userMessage.ToLower().Equals("branches"))
                 {
@@ -44,6 +55,20 @@ namespace ContosoBankBot
                     }
 
                 }
+                else if (userMessage.ToLower().Equals("atms"))
+                {
+                    List<Atm_Machines> atms = await AzureManager.AzureManagerInstance.GetATMs();
+                    endOutput = "";
+
+                    foreach (Atm_Machines a in atms)
+                    {
+                        endOutput += "\nATM Location: " + a.Location + "\n Available: " + a.Available + "\n";
+                    }
+                }
+                else if (userMessage.ToLower().Equals("login"))
+                {
+
+                }
                 else if (userMessage.Length > 6)
                 {
                     if (userMessage.ToLower().Substring(0, 6).Equals("branch"))
@@ -54,8 +79,62 @@ namespace ContosoBankBot
                         endOutput = "Bank Name: " + b.Name + " \nLocation: " + b.Location + " \nWeekday Open Hours: " + b.WeekdayOpen + " - " + b.WeekdayClose + " \nWeekend Open Hours: " + b.WeekendOpen + " - " + b.WeekendClose;
 
                     }
-                }
+                    else if (userMessage.ToLower().Substring(0, 10).Equals("create-atm") && userData.GetProperty<bool>("AdminRights"))
+                    {
+                        string atmLoc = userMessage.Substring(11);
 
+                        Atm_Machines a = new Atm_Machines()
+                        {
+                            Location = atmLoc,
+                            Available = true
+                        };
+
+                        await AzureManager.AzureManagerInstance.AddAtm(a);
+                        endOutput = "Added new ATM at [" + atmLoc + "]";
+                    }
+                    else if (userMessage.ToLower().Substring(0, 10).Equals("delete-atm") && userData.GetProperty<bool>("AdminRights"))
+                    {
+                        string atmLoc = userMessage.Substring(11);
+
+                        Activity reply1 = activity.CreateReply(atmLoc);
+                        await connector.Conversations.ReplyToActivityAsync(reply1);
+                        if (await AzureManager.AzureManagerInstance.DeleteAtm(atmLoc))
+                        {
+                            endOutput = "Delete ATM [" + atmLoc + "]";
+                        }
+                        else
+                        {
+                            endOutput = "Could not delete ATM [" + atmLoc + "]. Please make sure ATM exists";
+                        }
+
+
+                    }
+                    else if (userMessage.ToLower().Substring(0, 10).Equals("update-atm") && userData.GetProperty<bool>("AdminRights"))
+                    {
+
+                    }
+
+                    if (userMessage.Length > 5)
+                    {
+                        if (userMessage.ToLower().Substring(0, 5).Equals("login"))
+                        {
+                            string temp = userMessage.Substring(6);
+                            string[] userInfo = temp.Split(' ');
+
+                            endOutput = "Username: " + userInfo[0] + " Password: " + userInfo[1];
+
+                            if (await AzureManager.AzureManagerInstance.GetAccount(userInfo[0], userInfo[1]))
+                            {
+                                userData.SetProperty<bool>("AdminRights", true);
+                                await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
+                                endOutput = "Successfully logged in as " + userInfo[0];
+                            }
+                        }
+                    }
+
+
+                }
+               
                 // return our reply to the user
                 Activity reply = activity.CreateReply(endOutput);
                 await connector.Conversations.ReplyToActivityAsync(reply);
