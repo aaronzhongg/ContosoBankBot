@@ -69,6 +69,12 @@ namespace ContosoBankBot
                 {
 
                 }
+                else if (userMessage.ToLower().Equals("logout"))
+                {
+                    userData.SetProperty<bool>("AdminRights", false);
+                    await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
+                    endOutput = "Successfully logged out";
+                }
                 else if (userMessage.Length > 6)
                 {
                     if (userMessage.ToLower().Substring(0, 6).Equals("branch"))
@@ -96,11 +102,11 @@ namespace ContosoBankBot
                     {
                         string atmLoc = userMessage.Substring(11);
 
-                        Activity reply1 = activity.CreateReply(atmLoc);
-                        await connector.Conversations.ReplyToActivityAsync(reply1);
+                        //Activity reply1 = activity.CreateReply(atmLoc);
+                        //await connector.Conversations.ReplyToActivityAsync(reply1);
                         if (await AzureManager.AzureManagerInstance.DeleteAtm(atmLoc))
                         {
-                            endOutput = "Delete ATM [" + atmLoc + "]";
+                            endOutput = "Deleted ATM [" + atmLoc + "]";
                         }
                         else
                         {
@@ -112,6 +118,11 @@ namespace ContosoBankBot
                     else if (userMessage.ToLower().Substring(0, 10).Equals("update-atm") && userData.GetProperty<bool>("AdminRights"))
                     {
 
+                    }
+
+                    if ((userMessage.ToLower().Substring(0, 10).Equals("update-atm") || userMessage.ToLower().Substring(0, 10).Equals("delete-atm") || userMessage.ToLower().Substring(0, 10).Equals("create-atm")) && !userData.GetProperty<bool>("AdminRights"))
+                    {
+                        endOutput = "Please login with an account with admin rights";
                     }
 
                     if (userMessage.Length > 5)
