@@ -71,9 +71,15 @@ namespace ContosoBankBot
                 {
                     string branch = rawMessage.Substring(7);
 
-                    Branches b = await AzureManager.AzureManagerInstance.GetBranch(branch);
-                    endOutput = "Bank Name: " + b.Name + " \nLocation: " + b.Location + " \nWeekday Open Hours: " + b.WeekdayOpen + " - " + b.WeekdayClose + " \nWeekend Open Hours: " + b.WeekendOpen + " - " + b.WeekendClose;
-
+                    try
+                    {
+                        Branches b = await AzureManager.AzureManagerInstance.GetBranch(branch);
+                        endOutput = "Bank Name: " + b.Name + " \nLocation: " + b.Location + " \nWeekday Open Hours: " + b.WeekdayOpen + " - " + b.WeekdayClose + " \nWeekend Open Hours: " + b.WeekendOpen + " - " + b.WeekendClose;
+                    }
+                    catch (Exception e)
+                    {
+                        endOutput = "Branch [" + branch + "] not found";
+                    }
                 }
                 else if (userMessage[0].ToLower().Equals("create-atm") && userData.GetProperty<bool>("AdminRights"))
                 {
@@ -145,8 +151,6 @@ namespace ContosoBankBot
                     string stock = userMessage[1];
                     try
                     {
-
-
                         HttpClient client = new HttpClient();
                         var x = await client.GetStringAsync(new Uri("http://finance.google.com/finance/info?client=ig&q=" + stock));
                         x = x.Replace("//", "");

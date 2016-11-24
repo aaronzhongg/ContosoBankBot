@@ -53,7 +53,7 @@ namespace ContosoBankBot
         {
             List<Branches> branches = await GetBranches();
 
-            return branches.First(b => b.Name.ToLower() == branch.ToLower());
+            return branches.First(b => b.Name.ToLower().Contains(branch.ToLower()));
         }
 
         public async Task<List<Atm_Machines>> GetATMs()
@@ -70,7 +70,7 @@ namespace ContosoBankBot
         {
             List<Atm_Machines> atms = await GetATMs();
 
-            Atm_Machines a = atms.Find(atm => atm.Location.ToLower() == atmLoc.ToLower());
+            Atm_Machines a = atms.Find(atm => atm.Location.ToLower().Contains(atmLoc.ToLower()));
 
             if (a != null)
             {
