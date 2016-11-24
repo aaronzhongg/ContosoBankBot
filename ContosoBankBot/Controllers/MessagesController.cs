@@ -34,6 +34,8 @@ namespace ContosoBankBot
                 string[] userMessage = activity.Text.Split(' ');
                 string rawMessage = activity.Text;
                 var endOutput = "Welcome to Contoso Bank. Type a command or type Help for a list of available commands";
+                bool textReply = true;
+                Activity reply = activity.CreateReply("");
 
                 if (userMessage[0].ToLower().Equals("help"))
                 {
@@ -49,6 +51,32 @@ namespace ContosoBankBot
                     {
                         endOutput += "\nBank Name: " + b.Name + "\nLocation: " + b.Location + "\n";
                     }
+
+                    reply = activity.CreateReply(endOutput);
+                    reply.Recipient = activity.From;
+                    reply.Type = "message";
+                    reply.Attachments = new List<Attachment>();
+                    List<CardImage> cardImages = new List<CardImage>();
+                    cardImages.Add(new CardImage(url: "https://www.bankofwalterboro.com/wp-content/uploads/2015/03/Bank-512.png"));
+                    List<CardAction> cardButtons = new List<CardAction>();
+                    CardAction visitSite = new CardAction()
+                    {
+                        Value = "http://anz.co.nz",
+                        Type = "openUrl",
+                        Title = "Visit Contoso's Website"
+                    };
+                    cardButtons.Add(visitSite);
+                    ThumbnailCard plCard = new ThumbnailCard()
+                    {
+                        Title = "Contoso Bank",
+                        Subtitle = "",
+                        Images = cardImages,
+                        Buttons = cardButtons
+                    };
+                    Attachment plAttachment = plCard.ToAttachment();
+                    reply.Attachments.Add(plAttachment);
+
+                    textReply = false;
 
                 }
                 else if (userMessage[0].ToLower().Equals("atms"))
@@ -74,7 +102,33 @@ namespace ContosoBankBot
                     try
                     {
                         Branches b = await AzureManager.AzureManagerInstance.GetBranch(branch);
-                        endOutput = "Bank Name: " + b.Name + " \nLocation: " + b.Location + " \nWeekday Open Hours: " + b.WeekdayOpen + " - " + b.WeekdayClose + " \nWeekend Open Hours: " + b.WeekendOpen + " - " + b.WeekendClose;
+                        endOutput = "Bank Name: " + b.Name + " \n\nLocation: " + b.Location + " \n\nWeekday Open Hours: " + b.WeekdayOpen + " - " + b.WeekdayClose + "\n\nWeekend Open Hours: " + b.WeekendOpen + " - " + b.WeekendClose;
+
+                        reply = activity.CreateReply(endOutput);
+                        reply.Recipient = activity.From;
+                        reply.Type = "message";
+                        reply.Attachments = new List<Attachment>();
+                        List<CardImage> cardImages = new List<CardImage>();
+                        cardImages.Add(new CardImage(url: "http://www.omegaalpha.ca/pictures/content/map_toronto1.png"));
+                        List<CardAction> cardButtons = new List<CardAction>();
+                        CardAction visitSite = new CardAction()
+                        {
+                            Value = "https://www.google.co.nz/maps/place/ANZ/@-36.8448231,174.7640794,17z/data=!3m1!4b1!4m5!3m4!1s0x6d0d47fbd990e41f:0xcf7917c49daf47cb!8m2!3d-36.8448231!4d174.7662681",
+                            Type = "openUrl",
+                            Title = "View location on google maps"
+                        };
+                        cardButtons.Add(visitSite);
+                        ThumbnailCard plCard = new ThumbnailCard()
+                        {
+                            Title = "Contoso Bank",
+                            Subtitle = "",
+                            Images = cardImages,
+                            Buttons = cardButtons
+                        };
+                        Attachment plAttachment = plCard.ToAttachment();
+                        reply.Attachments.Add(plAttachment);
+
+                        textReply = false;
                     }
                     catch (Exception e)
                     {
@@ -160,18 +214,49 @@ namespace ContosoBankBot
 
                         foreach (var i in v)
                         {
+                   
                             var price = (decimal)i.SelectToken("l");
-                            endOutput = "The stock price for [" + stock + "] is $" + price;
+                            endOutput = "The stock price for [" + stock.ToUpper() + "] is $" + price;
+
+                            reply = activity.CreateReply("");
+                            reply.Recipient = activity.From;
+                            reply.Type = "message";
+                            reply.Attachments = new List<Attachment>();
+                            List<CardImage> cardImages = new List<CardImage>();
+                            cardImages.Add(new CardImage(url: "https://www.bankofwalterboro.com/wp-content/uploads/2015/03/Bank-512.png"));
+                            List<CardAction> cardButtons = new List<CardAction>();
+                            CardAction visitSite = new CardAction()
+                            {
+                                Value = "https://www.google.com/finance?q=NASDAQ:" + stock,
+                                Type = "openUrl",
+                                Title = "View more details"
+                            };
+                            cardButtons.Add(visitSite);
+                            ThumbnailCard plCard = new ThumbnailCard()
+                            {
+                                Title = "Contoso Bank Stocks",
+                                Subtitle = stock.ToUpper() + ": " + price,
+                                Images = cardImages,
+                                Buttons = cardButtons
+                            };
+                            Attachment plAttachment = plCard.ToAttachment();
+                            reply.Attachments.Add(plAttachment);
+
+                            textReply = false;
                         }
                     }
                     catch (Exception e)
                     {
-                        endOutput = "The stock [" + stock + "] could not be found";
+                        endOutput = "The stock [" + stock.ToUpper() + "] could not be found";
                     }
                 }
 
                 // return our reply to the user
-                Activity reply = activity.CreateReply(endOutput);
+                if (textReply)
+                {
+                    reply = activity.CreateReply(endOutput);
+                }
+
                 await connector.Conversations.ReplyToActivityAsync(reply);
             }
             else
