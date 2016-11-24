@@ -36,13 +36,18 @@ namespace ContosoBankBot
                 var endOutput = "Welcome to Contoso Bank. Type a command or type Help for a list of available commands";
                 bool textReply = true;
                 Activity reply = activity.CreateReply("");
+                string[] commands = { "Branches - Return list of branches", "Branch <Branch-name> - Return branch info", "ATMS - Return list of atms and their availability", "Stock <Stock-id> - Return stock price", "Login <username> <password> - Login to account", "Logout - log user out", "Create-ATM <Atm name> - Create new ATM (admin only)", "Delete-ATM <ATM name> - Delete ATM (admin only)" };
 
-                if (userMessage[0].ToLower().Equals("help"))
+                if (userMessage[0].ToLower().Equals("help")) // HELP
                 {
-                    endOutput = "Avaliable commands: \n\n Branches - Return list of branches \n Branch <Branch name> - Return Branch information  \n ATMS - Return a list of ATMS and their availablity ";
+                    endOutput = "";
+                    foreach (string c in commands)
+                    {
+                        endOutput += c + "\n\n";
+                    }
 
                 }
-                else if (userMessage[0].ToLower().Equals("branches"))
+                else if (userMessage[0].ToLower().Equals("branches")) //BRANCHES
                 {
                     List<Branches> branches = await AzureManager.AzureManagerInstance.GetBranches();
                     endOutput = "";
@@ -79,7 +84,7 @@ namespace ContosoBankBot
                     textReply = false;
 
                 }
-                else if (userMessage[0].ToLower().Equals("atms"))
+                else if (userMessage[0].ToLower().Equals("atms")) //ATMS
                 {
                     List<Atm_Machines> atms = await AzureManager.AzureManagerInstance.GetATMs();
                     endOutput = "";
@@ -95,7 +100,7 @@ namespace ContosoBankBot
                     await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
                     endOutput = "Successfully logged out";
                 }
-                else if (userMessage[0].ToLower().Equals("branch"))
+                else if (userMessage[0].ToLower().Equals("branch")) //BRANCH <BRANCH-NAME>
                 {
                     string branch = rawMessage.Substring(7);
 
@@ -135,7 +140,7 @@ namespace ContosoBankBot
                         endOutput = "Branch [" + branch + "] not found";
                     }
                 }
-                else if (userMessage[0].ToLower().Equals("create-atm") && userData.GetProperty<bool>("AdminRights"))
+                else if (userMessage[0].ToLower().Equals("create-atm") && userData.GetProperty<bool>("AdminRights")) //CREATE-ATM <ATM NAME>
                 {
                     string atmLoc = rawMessage.Substring(11);
 
@@ -148,7 +153,7 @@ namespace ContosoBankBot
                     await AzureManager.AzureManagerInstance.AddAtm(a);
                     endOutput = "Added new ATM at [" + atmLoc + "]";
                 }
-                else if (userMessage[0].ToLower().Equals("delete-atm") && userData.GetProperty<bool>("AdminRights"))
+                else if (userMessage[0].ToLower().Equals("delete-atm") && userData.GetProperty<bool>("AdminRights")) //DELETE-ATM <ATM-NAME>
                 {
                     string atmLoc = rawMessage.Substring(11);
 
@@ -165,13 +170,13 @@ namespace ContosoBankBot
 
 
                 }
-                else if (userMessage[0].ToLower().Equals("update-atm") && userData.GetProperty<bool>("AdminRights"))
+                else if (userMessage[0].ToLower().Equals("update-atm") && userData.GetProperty<bool>("AdminRights")) //UPDATE-ATM <ATM-NAME> <NEW-NAME> <AVAILABILITY
                 {
-
+                    //TODO
                 }
-                else if (userMessage[0].ToLower().Equals("exchange-rate"))
+                else if (userMessage[0].ToLower().Equals("exchange-rate")) //EXCHANGE-RATE <FROM> <TO>
                 {
-
+                    //TODO
                     HttpClient client = new HttpClient();
                     string x = await client.GetStringAsync(new Uri("http://api.fixer.io/latest?base=" + userMessage[1]));
 
@@ -185,7 +190,7 @@ namespace ContosoBankBot
                 {
                     endOutput = "Please login with an account with admin rights";
                 }
-                else if (userMessage[0].ToLower().Equals("login"))
+                else if (userMessage[0].ToLower().Equals("login")) //LOGIN <USERNAME> <PASSWORD>
                 {
                     if (await AzureManager.AzureManagerInstance.GetAccount(userMessage[1], userMessage[2]))
                     {
@@ -199,7 +204,7 @@ namespace ContosoBankBot
                     }
                 }
 
-                else if (userMessage[0].ToLower().Equals("stock"))
+                else if (userMessage[0].ToLower().Equals("stock")) //STOCK <STOCK-ID>
                 {
 
                     string stock = userMessage[1];
